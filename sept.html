@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buget</title>
+    <style>
+        /* Stiluri CSS inspirate de tema iPhone Apple */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f5;
+            color: #333;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            color: #007aff;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dcdcdc;
+        }
+        th {
+            background-color: #007aff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .total {
+            font-weight: bold;
+        }
+        .summary {
+            margin-top: 30px;
+        }
+        .checkbox-column {
+            width: 70px;
+            text-align: center;
+        }
+        .toggle {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            display: inline-block;
+        }
+        .toggle input {
+            display: none;
+        }
+        .slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4cd964;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .completed {
+            background-color: #fff;
+            color: #000;
+        }
+        .incasari-row.completed {
+            background-color: #4cd964;
+            color: #fff;
+        }
+        .cheltuieli-row.completed {
+            background-color: #ff3b30;
+            color: #fff;
+        }
+        .form-section {
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+        .form-section input, .form-section button {
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .form-section input {
+            border: 1px solid #dcdcdc;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+        }
+        .form-section button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .form-section button:hover {
+            background-color: #005bb5;
+        }
+        .sold, .incasari, .cheltuieli, .sold-final {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .sold {
+            color: #ff3b30;
+        }
+        .incasari {
+            color: #007aff;
+        }
+        .cheltuieli {
+            color: #ff9500;
+        }
+        .sold-verde, .sold-final {
+            color: #4cd964;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buget</h1>
+
+    <div class="form-section">
+        <label for="month-selector">Selectează Luna:</label>
+        <input type="month" id="month-selector" onchange="updateMonth()" />
+    </div>
+
+    <div class="form-section">
+        <label for="buget-initial">Buget Inițial:</label>
+        <input type="number" id="buget-initial" placeholder="0" onchange="updateInitialBudget()" />
+    </div>
+
+    <h3>Încasări</h3>
+    <table id="incasari-table">
+        <tr>
+            <th class="checkbox-column">Activare</th>
+            <th>Descriere</th>
+            <th>Sumă</th>
+            <th>Data</th>
+        </tr>
+        <tbody id="incasari-body">
+            <!-- Rânduri de încasări vor fi actualizate dinamic -->
+        </tbody>
+    </table>
+
+    <div class="form-section">
+        <h3>Adaugă Încasare</h3>
+        <form id="add-incasare-form" onsubmit="addIncasare(event)">
+            <input type="text" id="incasare-descriere" placeholder="Descriere" required>
+            <input type="number" id="incasare-suma" placeholder="Sumă" required>
+            <input type="date" id="incasare-data" placeholder="Data" required>
+            <button type="submit">Adaugă</button>
+        </form>
+    </div>
+
+    <h3>Cheltuieli</h3>
+    <table id="cheltuieli-table">
+        <tr>
+            <th class="checkbox-column">Plătit</th>
+            <th>Descriere</th>
+            <th>Sumă</th>
+            <th>Data</th>
+        </tr>
+        <tbody id="cheltuieli-body">
+            <!-- Rânduri de cheltuieli vor fi actualizate dinamic -->
+        </tbody>
+    </table>
+
+    <div class="form-section">
+        <h3>Adaugă Cheltuială</h3>
+        <form id="add-cheltuiala-form" onsubmit="addCheltuiala(event)">
+            <input type="text" id="cheltuiala-descriere" placeholder="Descriere" required>
+            <input type="number" id="cheltuiala-suma" placeholder="Sumă" required>
+            <input type="date" id="cheltuiala-data" placeholder="Data" required>
+            <button type="submit">Adaugă</button>
+        </form>
+    </div>
+
+    <div class="form-section">
+        <button onclick="saveChanges()">Salvează modificările</button>
+    </div>
+
+    <div class="summary">
+        <h3>Sumar</h3>
+        <p class="incasari">Total Încasări: <span id="total-incasari">0</span> lei</p>
+        <p class="cheltuieli">Total Cheltuieli: <span id="total-cheltuieli">0</span> lei</p>
+        <p class="sold">Sold Inițial: <span id="sold-initial-value">0</span> lei</p>
+        <p class="sold-final">Sold Final: <span id="sold-final">0</span> lei</p>
+    </div>
+
+    <script>
+        let bugetInitial = 0;
+        let totalIncasari = 0;
+        let totalCheltuieli = 0;
+        let incasariData = JSON.parse(localStorage.getItem('incasariData')) || [];
+        let cheltuieliData = JSON.parse(localStorage.getItem('cheltuieliData')) || [];
+
+        const incasariDefault = [
+            { descriere: 'Salariu El', suma: 0, data: '' },
+            { descriere: 'Salariu Ea Spital', suma: 0, data: '' },
+            { descriere: 'Salariu Ea Cabinet', suma: 0, data: '' },
+            { descriere: 'Salariu Ea Cabinet CAS', suma: 0, data: '' }
+        ];
+
+        const cheltuieliSeptembrie = [
+            { descriere: 'Nunta Vlad', suma: 2500, data: '2024-08-31' },
+            { descriere: 'Botez Petra', suma: 1500, data: '2024-09-03' },
+            { descriere: 'Tigari Grecia', suma: 500, data: '2024-09-05' },
+            { descriere: 'Benzina', suma: 300, data: '2024-09-05' },
+            { descriere: 'Grecia (vacanță)', suma: 4000, data: '2024-09-05' },
+            { descriere: 'Facultate El', suma: 2000, data: '2024-09-05' },
+            { descriere: 'Ziua Ei', suma: 2000, data: '2024-09-21' },
+            { descriere: 'BT El', suma: 100, data: '2024-09-25' }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMonth(); // Initialize based on current month
+        });
+
+        function updateMonth() {
+            const month = document.getElementById('month-selector').value;
+            const monthYear = new Date(month + '-01');
+            const isSeptember2024 = monthYear.getMonth() === 8 && monthYear.getFullYear() === 2024;
+
+            if (isSeptember2024) {
+                populateTable(incasariData.length ? incasariData : incasariDefault, 'incasari');
+                populateTable(cheltuieliData.length ? cheltuieliData : cheltuieliSeptembrie, 'cheltuieli');
+            } else {
+                document.getElementById('incasari-body').innerHTML = '';
+                document.getElementById('cheltuieli-body').innerHTML = '';
+            }
+
+            updateSold();
+        }
+
+        function populateTable(items, type) {
+            const tableBody = document.getElementById(type + '-body');
+            tableBody.innerHTML = ''; // Clear previous content
+
+            items.forEach(item => {
+                tableBody.innerHTML += `
+                    <tr class="${type}-row">
+                        <td class="checkbox-column">
+                            <label class="toggle">
+                                <input type="checkbox" onchange="markCompleted(this, ${type === 'incasari' ? item.suma : -item.suma}, '${type}')">
+                                <span class="slider"></span>
+                            </label>
+                        </td>
+                        <td>${item.descriere}</td>
+                        <td><input type="number" value="${item.suma}" ${type === 'cheltuieli' ? 'readonly' : ''} onchange="updateValue(this, ${item.suma}, '${type}')"></td>
+                        <td><input type="date" value="${item.data}" readonly></td>
+                    </tr>
+                `;
+            });
+
+            updateSold();
+        }
+
+        function updateValue(input, oldValue, type) {
+            let value = parseFloat(input.value) || 0;
+            if (type === 'incasari') {
+                totalIncasari += value - oldValue;
+            } else if (type === 'cheltuieli') {
+                totalCheltuieli += oldValue - value;
+            }
+            updateSold();
+        }
+
+        function markCompleted(checkbox, value, type) {
+            let row = checkbox.closest('tr');
+            let isChecked = checkbox.checked;
+
+            if (type === 'incasari') {
+                if (isChecked) {
+                    totalIncasari += value;
+                    row.classList.add('completed');
+                } else {
+                    totalIncasari -= value;
+                    row.classList.remove('completed');
+                }
+            } else if (type === 'cheltuieli') {
+                if (isChecked) {
+                    totalCheltuieli -= value; // Deduct cheltuieli
+                    row.classList.add('completed');
+                } else {
+                    totalCheltuieli += -value; // Add back cheltuieli
+                    row.classList.remove('completed');
+                }
+            }
+
+            document.getElementById('total-incasari').innerText = totalIncasari.toFixed(2);
+            document.getElementById('total-cheltuieli').innerText = totalCheltuieli.toFixed(2);
+            updateSold();
+        }
+
+        function updateInitialBudget() {
+            bugetInitial = parseFloat(document.getElementById('buget-initial').value) || 0;
+            document.getElementById('sold-initial-value').innerText = bugetInitial.toFixed(2);
+            updateSold();
+        }
+
+        function updateSold() {
+            let soldFinal = bugetInitial + totalIncasari - totalCheltuieli;
+            document.getElementById('sold-final').innerText = soldFinal.toFixed(2);
+        }
+
+        function addIncasare(event) {
+            event.preventDefault();
+            const descriere = document.getElementById('incasare-descriere').value;
+            const suma = parseFloat(document.getElementById('incasare-suma').value);
+            const data = document.getElementById('incasare-data').value;
+
+            if (descriere && suma && data) {
+                const newIncasare = { descriere, suma, data };
+                incasariData.push(newIncasare);
+                populateTable(incasariData, 'incasari');
+                updateSold(); // Ensure the sold is updated when new incasare is added
+            }
+        }
+
+        function addCheltuiala(event) {
+            event.preventDefault();
+            const descriere = document.getElementById('cheltuiala-descriere').value;
+            const suma = parseFloat(document.getElementById('cheltuiala-suma').value);
+            const data = document.getElementById('cheltuiala-data').value;
+
+            if (descriere && suma && data) {
+                const newCheltuiala = { descriere, suma, data };
+                cheltuieliData.push(newCheltuiala);
+                populateTable(cheltuieliData, 'cheltuieli');
+                updateSold(); // Ensure the sold is updated when new cheltuiala is added
+            }
+        }
+
+        function saveChanges() {
+            // Save in local storage
+            localStorage.setItem('incasariData', JSON.stringify(incasariData));
+            localStorage.setItem('cheltuieliData', JSON.stringify(cheltuieliData));
+            alert('Modificările au fost salvate!');
+        }
+    </script>
+</body>
+</html>
